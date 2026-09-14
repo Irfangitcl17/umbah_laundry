@@ -243,7 +243,11 @@ if (!empty($lacakKeyword)) {
     <!-- Header Publik Umbah Laundry -->
     <header class="landing-header">
         <div class="brand-wrapper">
-            <div class="brand-logo-icon">🧺</div>
+            <div class="brand-logo-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
             <div>
                 <a href="index.php" class="brand-title">UMBAH LAUNDRY</a>
                 <div class="brand-loc">Telang, Kamal, Madura</div>
@@ -262,17 +266,17 @@ if (!empty($lacakKeyword)) {
     <div class="content">
         <!-- Hero Banner Landing Page -->
         <div class="landing-hero">
-            <div class="hero-badge">✨ Laundry Terpercaya di Telang Madura</div>
+            <div class="hero-badge">Laundry Terpercaya di Telang Madura</div>
             <h1 class="hero-title">Cucian Bersih, Wangi & Rapi Tanpa Repot</h1>
             <p class="hero-desc">
                 Solusi cerdas kebutuhan laundry harian Anda. 1 mesin 1 pelanggan, deterjen berkualitas, wangi tahan lama, dengan kemudahan lacak status secara real-time.
             </p>
             <div class="hero-actions">
                 <a href="register.php" class="btn-hero-primary">
-                    🧺 Pesan Laundry Sekarang
+                    Pesan Laundry Sekarang
                 </a>
                 <a href="#lacakSection" class="btn-hero-secondary">
-                    🔍 Lacak Status Cucian
+                    Lacak Status Cucian
                 </a>
             </div>
         </div>
@@ -280,26 +284,30 @@ if (!empty($lacakKeyword)) {
         <!-- Section 1: Lacak Status Cucian Cepat (Tanpa Perlu Login) -->
         <div class="section-box" id="lacakSection">
             <div class="section-title">
-                <span>🔍</span> Lacak Status Cucian Anda
+                Lacak Status Cucian Anda
             </div>
             <div class="section-sub">
                 Masukkan <strong>Nomor Nota (cth: UMB-...)</strong> atau <strong>Nomor WhatsApp</strong> untuk melihat progres cucian Anda secara langsung:
             </div>
 
-            <form method="GET" action="index.php#lacakSection" class="search-wrapper" style="margin-bottom: 0.75rem;">
-                <span class="search-icon">🔎</span>
-                <input type="text" name="lacak" placeholder="Ketik No. Nota atau No. WhatsApp Anda..." value="<?= htmlspecialchars($lacakKeyword) ?>" required>
+            <form method="GET" action="index.php#lacakSection" style="margin-bottom: 0.75rem;">
+                <div class="search-wrapper" style="margin-bottom: 0.75rem;">
+                    <span class="search-icon" style="display:inline-flex;align-items:center;">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </span>
+                    <input type="text" name="lacak" placeholder="Ketik No. Nota atau No. WhatsApp Anda..." value="<?= htmlspecialchars($lacakKeyword) ?>" required>
+                </div>
+                <button type="submit" class="btn-primary" style="min-height: 42px; font-size: 0.88rem; width: 100%;">
+                    Cek Status Cucian Sekarang
+                </button>
             </form>
-            <button type="submit" formAction="index.php#lacakSection" class="btn-primary" style="min-height: 42px; font-size: 0.88rem;">
-                Cek Status Cucian Sekarang
-            </button>
 
             <!-- Hasil Pencarian Tracking -->
             <?php if (!empty($lacakKeyword)): ?>
                 <div style="margin-top: 1.25rem;">
                     <?php if (empty($hasilLacak)): ?>
                         <div class="alert alert-danger" style="margin-bottom: 0;">
-                            ⚠️ Tidak ditemukan cucian dengan nomor nota atau no WhatsApp "<strong><?= htmlspecialchars($lacakKeyword) ?></strong>". Mohon pastikan nomor yang dimasukkan sudah benar.
+                            Tidak ditemukan cucian dengan nomor nota atau no WhatsApp "<strong><?= htmlspecialchars($lacakKeyword) ?></strong>". Mohon pastikan nomor yang dimasukkan sudah benar.
                         </div>
                     <?php else: ?>
                         <div style="font-weight: 700; font-size: 0.85rem; color: var(--primary); margin-bottom: 0.65rem;">
@@ -374,7 +382,7 @@ if (!empty($lacakKeyword)) {
         <!-- Section 2: Simulasi Biaya Cucian (Kalkulator Interaktif) -->
         <div class="section-box">
             <div class="section-title">
-                <span>🧮</span> Kalkulator Estimasi Biaya
+                Kalkulator Estimasi Biaya
             </div>
             <div class="section-sub">
                 Hitung perkiraan biaya laundry Anda sebelum memesan:
@@ -403,14 +411,14 @@ if (!empty($lacakKeyword)) {
             </div>
 
             <a href="register.php" class="btn-primary" style="margin-top: 0.5rem; text-decoration: none;">
-                🧺 Pesan Layanan Ini Sekarang
+                Pesan Layanan Ini Sekarang
             </a>
         </div>
 
         <!-- Section 3: Daftar Layanan & Tarif -->
         <div class="section-box">
             <div class="section-title">
-                <span>📋</span> Daftar Layanan & Tarif
+                Daftar Layanan & Tarif
             </div>
             <div class="section-sub">
                 Harga terjangkau, transparan, dan hasil cucian terjamin higienis:
@@ -437,7 +445,7 @@ if (!empty($lacakKeyword)) {
         <!-- Section 4: Mengapa Memilih Umbah Laundry? -->
         <div class="section-box">
             <div class="section-title">
-                <span>⭐</span> Keunggulan Umbah Laundry
+                Keunggulan Umbah Laundry
             </div>
             <div class="section-sub">
                 Komitmen kami memberikan standar kebersihan terbaik untuk pakaian Anda:
@@ -445,22 +453,30 @@ if (!empty($lacakKeyword)) {
 
             <div class="feature-grid">
                 <div class="feature-card">
-                    <div class="feature-icon">🧼</div>
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
                     <div class="feature-name">1 Mesin 1 Pelanggan</div>
                     <div class="feature-desc">Cucian Anda tidak pernah dicampur dengan pakaian orang lain. Higienis & aman.</div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">🌸</div>
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    </div>
                     <div class="feature-name">Wangi Tahan Lama</div>
                     <div class="feature-desc">Menggunakan deterjen dan pewangi premium khusus laundry berkualitas tinggi.</div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">⚡</div>
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
                     <div class="feature-name">Tepat Waktu</div>
                     <div class="feature-desc">Jadwal selesai yang disiplin dan konsisten untuk kenyamanan aktivitas Anda.</div>
                 </div>
                 <div class="feature-card">
-                    <div class="feature-icon">📱</div>
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    </div>
                     <div class="feature-name">Tracking Online</div>
                     <div class="feature-desc">Bisa pantau progres cucian langsung dari smartphone kapan saja.</div>
                 </div>
@@ -470,32 +486,32 @@ if (!empty($lacakKeyword)) {
         <!-- Section 5: Lokasi & Hubungi Kami -->
         <div class="section-box">
             <div class="section-title">
-                <span>📍</span> Lokasi & Jam Buka Outlet
+                Lokasi & Jam Buka Outlet
             </div>
             <div class="section-sub">
                 Kunjungi outlet kami atau hubungi kami untuk layanan antar-jemput:
             </div>
 
             <div style="font-size: 0.85rem; color: var(--text-main); line-height: 1.6; margin-bottom: 1rem;">
-                🏢 <strong>Alamat:</strong> Jl. Raya Telang No. 12, Kamal, Bangkalan, Madura<br>
-                ⏰ <strong>Jam Operasional:</strong> Buka Setiap Hari (07.00 - 21.00 WIB)<br>
-                📞 <strong>WhatsApp:</strong> 0877-1589-0651
+                <strong>Alamat:</strong> Jl. Raya Telang No. 12, Kamal, Bangkalan, Madura<br>
+                <strong>Jam Operasional:</strong> Buka Setiap Hari (07.00 - 21.00 WIB)<br>
+                <strong>WhatsApp:</strong> 0877-1589-0651
             </div>
 
             <a href="https://api.whatsapp.com/send?phone=6287715890651&text=Halo%20Umbah%20Laundry,%20saya%20mau%20tanya%20layanan%20laundry" target="_blank" class="btn-primary" style="background: #25d366; border: none; text-decoration: none;">
-                💬 Hubungi Kami via WhatsApp
+                Hubungi Kami via WhatsApp
             </a>
         </div>
 
         <!-- Footer -->
         <footer class="landing-footer">
             <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
-                🧺 UMBAH LAUNDRY
+                UMBAH LAUNDRY
             </div>
             <div>Solusi Cucian Bersih, Wangi & Rapi • Telang, Madura</div>
             <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
                 <a href="login.php" style="color: var(--text-muted); text-decoration: underline; font-size: 0.75rem;">
-                    🔒 Portal Staf / Login Kasir
+                    Portal Staf / Login Kasir
                 </a>
             </div>
         </footer>

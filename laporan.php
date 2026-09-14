@@ -74,7 +74,11 @@ $daftarTransaksi = $stmt->fetchAll();
 <div class="app-container">
     <header class="top-header">
         <div class="brand-wrapper">
-            <div class="brand-logo-icon">📊</div>
+            <div class="brand-logo-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+            </div>
             <div>
                 <a href="index.php" class="brand-title">LAPORAN KEUANGAN</a>
                 <div class="brand-loc">Sistem Umbah Laundry</div>
@@ -98,7 +102,7 @@ $daftarTransaksi = $stmt->fetchAll();
         <!-- Filter Form Custom Rentang Tanggal -->
         <details class="collapse-card" style="margin-bottom: 1.25rem;">
             <summary class="collapse-summary">
-                <span>🗓️ Pilih Rentang Tanggal Khusus</span>
+                <span>Pilih Rentang Tanggal Khusus</span>
                 <span>▼</span>
             </summary>
             <div class="collapse-body">
@@ -147,7 +151,7 @@ $daftarTransaksi = $stmt->fetchAll();
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.85rem;">
             <h4 style="font-size: 0.95rem; font-weight: 700;">Rincian Transaksi (<?= count($daftarTransaksi) ?>)</h4>
             <button type="button" class="btn-sm btn-sm-nota" onclick="window.print()" style="padding: 0.45rem 0.85rem;">
-                🖨️ Cetak Laporan
+                Cetak Laporan
             </button>
         </div>
 

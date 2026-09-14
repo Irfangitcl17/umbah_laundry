@@ -69,7 +69,11 @@ $services = $layananModel->getAll();
 <div class="app-container">
     <header class="top-header">
         <div class="brand-wrapper">
-            <div class="brand-logo-icon">🧼</div>
+            <div class="brand-logo-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
             <div>
                 <a href="index.php" class="brand-title">KELOLA LAYANAN</a>
                 <div class="brand-loc">Umbah Laundry • Madura</div>
@@ -83,11 +87,11 @@ $services = $layananModel->getAll();
 
     <div class="content">
         <?php if ($successMsg): ?>
-            <div class="alert alert-success">✅ <?= htmlspecialchars($successMsg) ?></div>
+            <div class="alert alert-success"><?= htmlspecialchars($successMsg) ?></div>
         <?php endif; ?>
 
         <?php if ($errorMsg): ?>
-            <div class="alert alert-danger">⚠️ <?= htmlspecialchars($errorMsg) ?></div>
+            <div class="alert alert-danger"><?= htmlspecialchars($errorMsg) ?></div>
         <?php endif; ?>
 
         <!-- Form Tambah Layanan Baru -->
@@ -171,7 +175,7 @@ $services = $layananModel->getAll();
                             <form method="POST" action="services.php" onsubmit="return confirm('Hapus layanan <?= htmlspecialchars(addslashes($srv['nama_layanan'])) ?>?')">
                                 <input type="hidden" name="hapus_id" value="<?= $srv['id'] ?>">
                                 <button type="submit" class="btn-sm btn-sm-danger">
-                                    🗑️ Hapus
+                                    Hapus
                                 </button>
                             </form>
                         </div>

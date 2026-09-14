@@ -122,7 +122,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="app-container" style="padding-bottom: 0;">
     <div class="login-wrapper">
-        <div class="login-brand-icon">🧺</div>
+        <div class="login-brand-icon">
+            <svg width="34" height="34" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            </svg>
+        </div>
         <h2 style="font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">Selamat Datang</h2>
         <p class="login-desc">Sistem Kasir & Operasional <strong>Umbah Laundry</strong></p>
 
@@ -142,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="input-password-wrapper">
                         <input type="password" id="password" name="password" placeholder="Masukkan password" required>
                         <button type="button" class="btn-toggle-pwd" id="btnTogglePwd" title="Tampilkan/Sembunyikan Kata Sandi">
-                            <span id="eyeIcon">👁️</span>
+                            <span id="eyeText" style="font-size: 0.72rem; font-weight: 700; color: var(--text-muted);">LIHAT</span>
                         </button>
                     </div>
                 </div>
@@ -179,15 +183,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Toggle Password Visibility
     const btnToggle = document.getElementById('btnTogglePwd');
     const pwdInput = document.getElementById('password');
-    const eyeIcon = document.getElementById('eyeIcon');
+    const eyeText = document.getElementById('eyeText');
 
     btnToggle.addEventListener('click', function() {
         if (pwdInput.type === 'password') {
             pwdInput.type = 'text';
-            eyeIcon.textContent = '🙈';
+            eyeText.textContent = 'TUTUP';
         } else {
             pwdInput.type = 'password';
-            eyeIcon.textContent = '👁️';
+            eyeText.textContent = 'LIHAT';
         }
     });
 </script>

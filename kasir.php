@@ -98,7 +98,11 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
     <!-- Header Kasir -->
     <header class="top-header">
         <div class="brand-wrapper">
-            <div class="brand-logo-icon">🏪</div>
+            <div class="brand-logo-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
             <div>
                 <a href="kasir.php" class="brand-title">PORTAL KASIR</a>
                 <div class="brand-loc">Umbah Laundry • Telang Madura</div>
@@ -122,11 +126,11 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
         </div>
 
         <?php if ($successMsg): ?>
-            <div class="alert alert-success">✅ <?= htmlspecialchars($successMsg) ?></div>
+            <div class="alert alert-success"><?= htmlspecialchars($successMsg) ?></div>
         <?php endif; ?>
 
         <?php if ($errorMsg): ?>
-            <div class="alert alert-danger">⚠️ <?= htmlspecialchars($errorMsg) ?></div>
+            <div class="alert alert-danger"><?= htmlspecialchars($errorMsg) ?></div>
         <?php endif; ?>
 
         <!-- Form Input Transaksi Baru Kasir -->
@@ -215,7 +219,9 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
             <?php if (!empty($statusFilter)): ?>
                 <input type="hidden" name="status" value="<?= htmlspecialchars($statusFilter) ?>">
             <?php endif; ?>
-            <span class="search-icon">🔍</span>
+            <span class="search-icon" style="display:inline-flex;align-items:center;">
+                <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+            </span>
             <input type="text" name="q" placeholder="Cari nama pelanggan, no HP, atau no nota..." value="<?= htmlspecialchars($searchQuery) ?>" onchange="this.form.submit()">
         </form>
 
@@ -232,7 +238,7 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
         <div class="order-list">
             <?php if (empty($daftarTransaksi)): ?>
                 <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 2.5rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;">
-                    🧺 Tidak ada antrian cucian ditemukan.
+                    Tidak ada antrian cucian ditemukan.
                 </div>
             <?php else: ?>
                 <?php foreach ($daftarTransaksi as $trx): ?>
@@ -251,11 +257,11 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
 
                         $waText = "Halo kak *{$trx['nama_pelanggan']}*,\n"
                                 . "Update cucian Anda di *Umbah Laundry*:\n"
-                                . "📌 No Nota: *{$trx['kode_transaksi']}*\n"
-                                . "🧺 Layanan: {$trx['nama_layanan']} ({$trx['berat_jumlah']} {$trx['satuan']})\n"
-                                . "💵 Total: Rp " . number_format($trx['total_harga'], 0, ',', '.') . " (" . $trx['status_pembayaran'] . ")\n"
-                                . "🏷️ Status Cucian: *{$trx['status_cucian']}*\n\n"
-                                . "Terima kasih! 🙏";
+                                . "No Nota: *{$trx['kode_transaksi']}*\n"
+                                . "Layanan: {$trx['nama_layanan']} ({$trx['berat_jumlah']} {$trx['satuan']})\n"
+                                . "Total: Rp " . number_format($trx['total_harga'], 0, ',', '.') . " (" . $trx['status_pembayaran'] . ")\n"
+                                . "Status Cucian: *{$trx['status_cucian']}*\n\n"
+                                . "Terima kasih.";
                         $waUrl = "https://api.whatsapp.com/send?phone={$hpWa}&text=" . urlencode($waText);
                     ?>
                     <div class="order-card">
@@ -264,14 +270,14 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
                                 <span class="order-code"><?= htmlspecialchars($trx['kode_transaksi']) ?></span>
                                 <h5><?= htmlspecialchars($trx['nama_pelanggan']) ?></h5>
                                 <div class="order-card-meta">
-                                    📱 <a href="<?= $waUrl ?>" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;"><?= htmlspecialchars($trx['no_hp']) ?></a>
+                                    Telp: <a href="<?= $waUrl ?>" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;"><?= htmlspecialchars($trx['no_hp']) ?></a>
                                     <br>
-                                    🧺 <?= htmlspecialchars($trx['nama_layanan']) ?> • <?= $trx['berat_jumlah'] ?> <?= htmlspecialchars($trx['satuan']) ?>
+                                    Layanan: <?= htmlspecialchars($trx['nama_layanan']) ?> • <?= $trx['berat_jumlah'] ?> <?= htmlspecialchars($trx['satuan']) ?>
                                     <?php if (!empty($trx['catatan'])): ?>
-                                        <br><span style="color: #d97706; font-size: 0.75rem;">📝 <?= htmlspecialchars($trx['catatan']) ?></span>
+                                        <br><span style="color: #d97706; font-size: 0.75rem;">Catatan: <?= htmlspecialchars($trx['catatan']) ?></span>
                                     <?php endif; ?>
                                     <br>
-                                    🕒 <?= date('d/m/Y H:i', strtotime($trx['tanggal_masuk'])) ?>
+                                    Masuk: <?= date('d/m/Y H:i', strtotime($trx['tanggal_masuk'])) ?>
                                 </div>
                             </div>
                             <div style="text-align: right;">
@@ -307,17 +313,17 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
                                         <input type="hidden" name="transaksi_id" value="<?= $trx['id'] ?>">
                                         <input type="hidden" name="new_status_bayar" value="Lunas">
                                         <button type="submit" class="btn-sm btn-sm-nota" title="Tandai Pembayaran Lunas" onclick="return confirm('Tandai transaksi ini Lunas?')">
-                                            💰 Lunaskan
+                                            Lunaskan
                                         </button>
                                     </form>
                                 <?php endif; ?>
 
                                 <a href="<?= $waUrl ?>" target="_blank" class="btn-sm btn-sm-whatsapp" title="Kirim WA">
-                                    💬 WA
+                                    WA
                                 </a>
 
                                 <button type="button" class="btn-sm btn-sm-nota" onclick="showReceipt(<?= htmlspecialchars(json_encode($trx)) ?>)">
-                                    🧾 Nota
+                                    Nota
                                 </button>
                             </div>
                         </div>
@@ -361,7 +367,7 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
     <div class="modal-card">
         <div class="modal-header">
             <h5 class="modal-title">Struk Nota Digital</h5>
-            <button type="button" class="modal-close" onclick="closeReceipt()">✕</button>
+            <button type="button" class="modal-close" onclick="closeReceipt()">&times;</button>
         </div>
         <div class="modal-body">
             <div id="printReceiptArea">
@@ -420,10 +426,10 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
 
             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;" class="no-print">
                 <button type="button" class="btn-primary" onclick="window.print()" style="min-height: 42px; font-size: 0.85rem;">
-                    🖨️ Cetak Struk
+                    Cetak Struk
                 </button>
                 <a id="rcptWaBtn" href="#" target="_blank" class="btn-outline btn-sm-whatsapp" style="text-decoration: none; min-height: 42px; font-size: 0.85rem; border: none;">
-                    💬 Kirim WA
+                    Kirim WA
                 </a>
             </div>
         </div>

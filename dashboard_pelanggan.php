@@ -140,7 +140,11 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
     <!-- Header Pelanggan -->
     <header class="top-header">
         <div class="brand-wrapper">
-            <div class="brand-logo-icon">🧺</div>
+            <div class="brand-logo-icon">
+                <svg width="22" height="22" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+            </div>
             <div>
                 <a href="dashboard_pelanggan.php" class="brand-title">UMBAH LAUNDRY</a>
                 <div class="brand-loc">Portal Pelanggan</div>
@@ -151,8 +155,10 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
                 <div class="user-badge-avatar"><?= strtoupper(substr($userNama, 0, 1)) ?></div>
                 <div class="user-badge-name"><?= htmlspecialchars($userNama) ?></div>
             </div>
-            <a href="logout.php" title="Keluar" onclick="return confirm('Keluar dari akun Anda?')" style="color: #ef4444; text-decoration: none; font-size: 1.1rem; padding: 0.2rem;">
-                🚪
+            <a href="logout.php" title="Keluar" onclick="return confirm('Keluar dari akun Anda?')" style="color: #ef4444; display: inline-flex; align-items: center; padding: 0.35rem;">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
             </a>
         </div>
     </header>
@@ -167,30 +173,30 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
 
         <!-- Banner Selamat Datang Pelanggan -->
         <div class="customer-banner">
-            <div class="customer-greeting">Halo, Kak <?= htmlspecialchars($userNama) ?>! 👋</div>
+            <div class="customer-greeting">Halo, Kak <?= htmlspecialchars($userNama) ?>!</div>
             <div class="customer-subtext">Mau cuci apa hari ini? Pesan sekarang dan nikmati cucian bersih, wangi & rapi.</div>
             <div style="margin-top: 0.75rem; display: flex; gap: 0.5rem;">
                 <a href="#formOrder" class="btn-primary" style="background: #ffffff; color: var(--primary); box-shadow: none; min-height: 38px; font-size: 0.82rem; padding: 0.4rem 0.85rem;">
                     + Pesan Laundry Baru
                 </a>
                 <a href="https://api.whatsapp.com/send?phone=6287715890651&text=Halo%20Umbah%20Laundry,%20saya%20mau%20tanya-tanya%20layanan" target="_blank" class="btn-primary" style="background: #25d366; color: #fff; box-shadow: none; min-height: 38px; font-size: 0.82rem; padding: 0.4rem 0.85rem; border: none;">
-                    💬 Chat WA
+                    Chat WA
                 </a>
             </div>
         </div>
 
         <?php if ($successMsg): ?>
-            <div class="alert alert-success">✅ <?= htmlspecialchars($successMsg) ?></div>
+            <div class="alert alert-success"><?= htmlspecialchars($successMsg) ?></div>
         <?php endif; ?>
 
         <?php if ($errorMsg): ?>
-            <div class="alert alert-danger">⚠️ <?= htmlspecialchars($errorMsg) ?></div>
+            <div class="alert alert-danger"><?= htmlspecialchars($errorMsg) ?></div>
         <?php endif; ?>
 
         <!-- Form Order Laundry Baru (Customer POV) -->
         <details class="collapse-card" id="formOrder" open>
             <summary class="collapse-summary">
-                <span><span class="badge-icon">🧺</span> Buat Pesanan Laundry Baru</span>
+                <span>Buat Pesanan Laundry Baru</span>
                 <span>▼</span>
             </summary>
             <div class="collapse-body">
@@ -260,13 +266,13 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
         <!-- Daftar Riwayat & Status Cucian Saya -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin: 1.25rem 0 0.75rem;">
             <h4 style="font-size: 0.95rem; font-weight: 700;">Pesanan & Status Cucian Saya (<?= count($riwayatPesanan) ?>)</h4>
-            <a href="dashboard_pelanggan.php" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600;">🔄 Segarkan</a>
+            <a href="dashboard_pelanggan.php" style="font-size: 0.75rem; color: var(--primary); text-decoration: none; font-weight: 600;">Segarkan</a>
         </div>
 
         <div class="order-list">
             <?php if (empty($riwayatPesanan)): ?>
                 <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 2.5rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;">
-                    🧺 Belum ada pesanan cucian. Buat pesanan pertama Anda pada formulir di atas!
+                    Belum ada pesanan cucian. Buat pesanan pertama Anda pada formulir di atas!
                 </div>
             <?php else: ?>
                 <?php foreach ($riwayatPesanan as $trx): ?>
@@ -301,11 +307,11 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
                                 <span class="order-code"><?= htmlspecialchars($trx['kode_transaksi']) ?></span>
                                 <h5><?= htmlspecialchars($trx['nama_layanan']) ?></h5>
                                 <div class="order-card-meta">
-                                    ⚖️ Berat: <?= $trx['berat_jumlah'] ?> <?= htmlspecialchars($trx['satuan']) ?>
+                                    Berat: <?= $trx['berat_jumlah'] ?> <?= htmlspecialchars($trx['satuan']) ?>
                                     <br>
-                                    🕒 Tanggal Masuk: <?= date('d M Y H:i', strtotime($trx['tanggal_masuk'])) ?>
+                                    Tanggal Masuk: <?= date('d M Y H:i', strtotime($trx['tanggal_masuk'])) ?>
                                     <?php if (!empty($trx['catatan'])): ?>
-                                        <br><span style="color: #d97706; font-size: 0.75rem;">📝 <?= htmlspecialchars($trx['catatan']) ?></span>
+                                        <br><span style="color: #d97706; font-size: 0.75rem;">Catatan: <?= htmlspecialchars($trx['catatan']) ?></span>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -349,10 +355,10 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
                             </span>
                             <div style="display: flex; gap: 0.4rem;">
                                 <a href="<?= $waUrl ?>" target="_blank" class="btn-sm btn-sm-whatsapp">
-                                    💬 Tanya Outlet
+                                    Tanya Outlet
                                 </a>
                                 <button type="button" class="btn-sm btn-sm-nota" onclick="showReceipt(<?= htmlspecialchars(json_encode($trx)) ?>)">
-                                    🧾 Struk Nota
+                                    Struk Nota
                                 </button>
                             </div>
                         </div>
@@ -364,7 +370,7 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
         <!-- Katalog Tarif Layanan -->
         <details class="collapse-card" style="margin-top: 1.5rem;">
             <summary class="collapse-summary">
-                <span>📋 Katalog & Tarif Semua Layanan</span>
+                <span>Katalog & Tarif Semua Layanan</span>
                 <span>▼</span>
             </summary>
             <div class="collapse-body">
@@ -419,7 +425,7 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
     <div class="modal-card">
         <div class="modal-header">
             <h5 class="modal-title">Nota Cucian Anda</h5>
-            <button type="button" class="modal-close" onclick="closeReceipt()">✕</button>
+            <button type="button" class="modal-close" onclick="closeReceipt()">&times;</button>
         </div>
         <div class="modal-body">
             <div id="printReceiptArea">
@@ -474,7 +480,7 @@ $riwayatPesanan = $transaksiModel->getTransaksiByPelangganId($pelangganId);
 
             <div style="display: flex; gap: 0.5rem; margin-top: 1rem;" class="no-print">
                 <button type="button" class="btn-primary" onclick="window.print()" style="min-height: 40px; font-size: 0.85rem;">
-                    🖨️ Cetak Nota
+                    Cetak Nota
                 </button>
                 <button type="button" class="btn-outline" onclick="closeReceipt()" style="min-height: 40px; font-size: 0.85rem;">
                     Tutup

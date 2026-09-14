@@ -108,16 +108,46 @@ class Transaksi {
         $keyword = trim($keyword);
         if (empty($keyword)) return [];
 
+        // Bersihkan angka untuk pencarian nomor telepon
+        $cleanPhone = preg_replace('/[^0-9]/', '', $keyword);
+        $phoneAlt = '';
+        if (str_starts_with($cleanPhone, '62')) {
+            $phoneAlt = '0' . substr($cleanPhone, 2);
+        } elseif (str_starts_with($cleanPhone, '0')) {
+            $phoneAlt = '62' . substr($cleanPhone, 1);
+        }
+
+        $conditions = [
+            "t.kode_transaksi LIKE :kCode",
+            "p.no_hp = :kExact",
+            "p.nama LIKE :kName"
+        ];
+        $params = [
+            ':kCode'  => "%{$keyword}%",
+            ':kExact' => $keyword,
+            ':kName'  => "%{$keyword}%"
+        ];
+
+        if (!empty($cleanPhone)) {
+            $conditions[] = "REPLACE(REPLACE(REPLACE(p.no_hp, '-', ''), ' ', ''), '+', '') = :kPhone";
+            $params[':kPhone'] = $cleanPhone;
+        }
+        if (!empty($phoneAlt)) {
+            $conditions[] = "REPLACE(REPLACE(REPLACE(p.no_hp, '-', ''), ' ', ''), '+', '') = :kPhoneAlt";
+            $params[':kPhoneAlt'] = $phoneAlt;
+        }
+
         $sql = "SELECT t.*, p.nama AS nama_pelanggan, p.no_hp, p.alamat AS alamat_pelanggan, 
                        l.nama_layanan, l.satuan, l.harga_per_satuan, u.nama AS nama_karyawan
                 FROM {$this->table} t
                 JOIN pelanggan p ON t.id_pelanggan = p.id
                 JOIN layanan l ON t.id_layanan = l.id
                 LEFT JOIN users u ON t.id_karyawan = u.id
-                WHERE t.kode_transaksi = :k1 OR p.no_hp = :k2
+                WHERE (" . implode(" OR ", $conditions) . ")
                 ORDER BY t.id DESC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':k1' => $keyword, ':k2' => $keyword]);
+        $stmt->execute($params);
         return $stmt->fetchAll();
     }
 

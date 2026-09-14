@@ -186,15 +186,7 @@ body {
     overflow: hidden;
 }
 
-.stat-card::after {
-    content: '🧺';
-    position: absolute;
-    right: -10px;
-    bottom: -15px;
-    font-size: 4.5rem;
-    opacity: 0.15;
-    pointer-events: none;
-}
+
 
 .stat-card h4 {
     font-size: 0.82rem;
