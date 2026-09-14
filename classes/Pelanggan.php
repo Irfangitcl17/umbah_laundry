@@ -25,4 +25,18 @@ class Pelanggan {
 
         return (int)$this->db->lastInsertId();
     }
+
+    public function getByNoHp(string $no_hp): ?array {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE no_hp = :no_hp LIMIT 1");
+        $stmt->execute([':no_hp' => $no_hp]);
+        $res = $stmt->fetch();
+        return $res ?: null;
+    }
+
+    public function getById(int $id): ?array {
+        $stmt = $this->db->prepare("SELECT * FROM {$this->table} WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $res = $stmt->fetch();
+        return $res ?: null;
+    }
 }

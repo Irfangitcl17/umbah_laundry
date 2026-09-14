@@ -10,10 +10,11 @@ class Transaksi {
     public function buatTransaksi(
         int $id_pelanggan, 
         int $id_layanan, 
-        int $id_karyawan, 
+        ?int $id_karyawan, 
         float $berat_jumlah, 
         string $metode,
-        string $status_pembayaran = 'Lunas'
+        string $status_pembayaran = 'Lunas',
+        string $catatan = ''
     ): string {
         // Ambil harga layanan
         $stmtLayanan = $this->db->prepare("SELECT harga_per_satuan FROM layanan WHERE id = :id");
@@ -25,8 +26,8 @@ class Transaksi {
         $kode_transaksi = 'UMB-' . date('Ymd') . '-' . strtoupper(substr(uniqid(), -4));
 
         $stmt = $this->db->prepare("INSERT INTO {$this->table} 
-            (kode_transaksi, id_pelanggan, id_layanan, id_karyawan, berat_jumlah, total_harga, metode_pembayaran, status_pembayaran, status_cucian) 
-            VALUES (:kode, :pelanggan, :layanan, :karyawan, :berat, :total, :metode, :status_bayar, 'Antrian')");
+            (kode_transaksi, id_pelanggan, id_layanan, id_karyawan, berat_jumlah, total_harga, metode_pembayaran, status_pembayaran, status_cucian, catatan) 
+            VALUES (:kode, :pelanggan, :layanan, :karyawan, :berat, :total, :metode, :status_bayar, 'Antrian', :catatan)");
 
         $stmt->execute([
             ':kode'         => $kode_transaksi,
@@ -36,7 +37,8 @@ class Transaksi {
             ':berat'        => $berat_jumlah,
             ':total'        => $total_harga,
             ':metode'       => $metode,
-            ':status_bayar' => $status_pembayaran
+            ':status_bayar' => $status_pembayaran,
+            ':catatan'      => htmlspecialchars($catatan)
         ]);
 
         return $kode_transaksi;
@@ -48,7 +50,7 @@ class Transaksi {
                 FROM {$this->table} t
                 JOIN pelanggan p ON t.id_pelanggan = p.id
                 JOIN layanan l ON t.id_layanan = l.id
-                JOIN users u ON t.id_karyawan = u.id
+                LEFT JOIN users u ON t.id_karyawan = u.id
                 WHERE 1=1";
         
         $params = [];
@@ -79,13 +81,44 @@ class Transaksi {
                 FROM {$this->table} t
                 JOIN pelanggan p ON t.id_pelanggan = p.id
                 JOIN layanan l ON t.id_layanan = l.id
-                JOIN users u ON t.id_karyawan = u.id
+                LEFT JOIN users u ON t.id_karyawan = u.id
                 WHERE t.id = :id LIMIT 1";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':id' => $id]);
         $res = $stmt->fetch();
         return $res ?: null;
+    }
+
+    public function getTransaksiByPelangganId(int $id_pelanggan): array {
+        $sql = "SELECT t.*, p.nama AS nama_pelanggan, p.no_hp, p.alamat AS alamat_pelanggan, 
+                       l.nama_layanan, l.satuan, l.harga_per_satuan, u.nama AS nama_karyawan
+                FROM {$this->table} t
+                JOIN pelanggan p ON t.id_pelanggan = p.id
+                JOIN layanan l ON t.id_layanan = l.id
+                LEFT JOIN users u ON t.id_karyawan = u.id
+                WHERE t.id_pelanggan = :id_pelanggan
+                ORDER BY t.id DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id_pelanggan' => $id_pelanggan]);
+        return $stmt->fetchAll();
+    }
+
+    public function lacakTransaksi(string $keyword): array {
+        $keyword = trim($keyword);
+        if (empty($keyword)) return [];
+
+        $sql = "SELECT t.*, p.nama AS nama_pelanggan, p.no_hp, p.alamat AS alamat_pelanggan, 
+                       l.nama_layanan, l.satuan, l.harga_per_satuan, u.nama AS nama_karyawan
+                FROM {$this->table} t
+                JOIN pelanggan p ON t.id_pelanggan = p.id
+                JOIN layanan l ON t.id_layanan = l.id
+                LEFT JOIN users u ON t.id_karyawan = u.id
+                WHERE t.kode_transaksi = :k1 OR p.no_hp = :k2
+                ORDER BY t.id DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':k1' => $keyword, ':k2' => $keyword]);
+        return $stmt->fetchAll();
     }
 
     public function updateStatus(int $id, string $status): bool {

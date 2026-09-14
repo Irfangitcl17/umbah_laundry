@@ -2,7 +2,11 @@
 session_start();
 
 if (isset($_SESSION['user'])) {
-    header("Location: index.php");
+    if ($_SESSION['user']['role'] === 'pelanggan') {
+        header("Location: dashboard_pelanggan.php");
+    } else {
+        header("Location: kasir.php");
+    }
     exit;
 }
 
@@ -28,9 +32,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'id'       => $userData['id'],
                     'username' => $userData['username'],
                     'nama'     => $userData['nama'],
+                    'no_hp'    => $userData['no_hp'],
+                    'alamat'   => $userData['alamat'] ?? '',
                     'role'     => $userData['role']
                 ];
-                header("Location: index.php");
+                
+                if ($userData['role'] === 'pelanggan') {
+                    header("Location: dashboard_pelanggan.php");
+                } else {
+                    header("Location: kasir.php");
+                }
                 exit;
             } else {
                 $errorMessage = "Username/No HP atau password salah.";
@@ -152,8 +163,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                 </svg>
-                Buat Akun Baru (Register)
+                Daftar Akun Pelanggan Baru
             </a>
+
+            <div style="text-align: center; margin-top: 1.25rem;">
+                <a href="index.php" style="color: var(--text-muted); font-size: 0.82rem; text-decoration: none; font-weight: 600;">
+                    &larr; Kembali ke Beranda Utama
+                </a>
+            </div>
         </div>
     </div>
 </div>

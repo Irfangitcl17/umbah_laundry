@@ -2,7 +2,11 @@
 session_start();
 
 if (isset($_SESSION['user'])) {
-    header("Location: index.php");
+    if ($_SESSION['user']['role'] === 'pelanggan') {
+        header("Location: dashboard_pelanggan.php");
+    } else {
+        header("Location: kasir.php");
+    }
     exit;
 }
 
@@ -17,24 +21,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = $_POST['password'] ?? '';
     $nama     = trim($_POST['nama'] ?? '');
     $no_hp    = trim($_POST['no_hp'] ?? '');
+    $alamat   = trim($_POST['alamat'] ?? '');
 
-    if (!empty($username) && !empty($password) && !empty($nama)) {
-        $database = new Database();
-        $db = $database->getConnection();
-        $userModel = new User($db);
+    if (!empty($username) && !empty($password) && !empty($nama) && !empty($no_hp)) {
+        try {
+            $database = new Database();
+            $db = $database->getConnection();
+            $userModel = new User($db);
 
-        if ($userModel->isUsernameExists($username)) {
-            $errorMessage = "Username '{$username}' sudah digunakan, silakan pilih yang lain.";
-        } else {
-            $isCreated = $userModel->register($username, $password, $nama, $no_hp, 'karyawan');
-            if ($isCreated) {
-                $successMessage = "Akun berhasil dibuat! Silakan masuk dengan akun baru Anda.";
+            if ($userModel->isUsernameExists($username)) {
+                $errorMessage = "Username '{$username}' sudah digunakan, silakan pilih username lain.";
             } else {
-                $errorMessage = "Terjadi kesalahan saat mendaftarkan akun.";
+                // Mendaftar sebagai role 'pelanggan' (Member Pelanggan Laundry)
+                $isCreated = $userModel->register($username, $password, $nama, $no_hp, 'pelanggan', $alamat);
+                if ($isCreated) {
+                    $successMessage = "Akun Pelanggan berhasil dibuat! Silakan masuk untuk mulai memesan laundry.";
+                } else {
+                    $errorMessage = "Terjadi kesalahan saat mendaftarkan akun.";
+                }
             }
+        } catch (Exception $e) {
+            $errorMessage = "Gangguan koneksi database: " . $e->getMessage();
         }
     } else {
-        $errorMessage = "Harap lengkapi semua kolom yang wajib diisi.";
+        $errorMessage = "Harap lengkapi Nama, No. WhatsApp, Username, dan Password.";
     }
 }
 ?>
@@ -43,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Daftar Akun Baru - Umbah Laundry</title>
+    <title>Daftar Akun Pelanggan - Umbah Laundry</title>
     <link rel="stylesheet" href="assets/css/chingu-style.css">
     <style>
         .register-wrapper {
@@ -100,9 +110,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <div class="app-container" style="padding-bottom: 0;">
     <div class="register-wrapper">
-        <div class="register-brand-icon">📝</div>
-        <h2 style="font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">Daftar Akun</h2>
-        <p class="register-desc">Pendaftaran Petugas Kasir <strong>Umbah Laundry</strong></p>
+        <div class="register-brand-icon">🧺</div>
+        <h2 style="font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem;">Daftar Akun Pelanggan</h2>
+        <p class="register-desc">Pendaftaran Member Pelanggan <strong>Umbah Laundry</strong></p>
 
         <div class="register-card">
             <?php if (!empty($errorMessage)): ?>
@@ -112,8 +122,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php if (!empty($successMessage)): ?>
                 <div class="alert alert-success">
                     <div><?= htmlspecialchars($successMessage) ?></div>
-                    <div style="margin-top: 0.75rem;">
-                        <a href="login.php" class="btn-primary" style="text-decoration:none; padding: 0.5rem 1rem; min-height: 38px; font-size: 0.85rem;">Ke Halaman Login</a>
+                    <div style="margin-top: 0.85rem;">
+                        <a href="login.php" class="btn-primary" style="text-decoration:none; padding: 0.6rem 1.25rem; min-height: 40px; font-size: 0.88rem;">Masuk Sekarang</a>
                     </div>
                 </div>
             <?php else: ?>
@@ -124,19 +134,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <div class="form-group">
-                        <label for="no_hp">Nomor WhatsApp</label>
-                        <input type="tel" id="no_hp" name="no_hp" placeholder="cth. 081234567890" value="<?= htmlspecialchars($_POST['no_hp'] ?? '') ?>">
+                        <label for="no_hp">Nomor WhatsApp Aktif</label>
+                        <input type="tel" id="no_hp" name="no_hp" placeholder="cth. 081234567890 (untuk info status cucian)" value="<?= htmlspecialchars($_POST['no_hp'] ?? '') ?>" required>
                     </div>
 
                     <div class="form-group">
-                        <label for="username">Username</label>
+                        <label for="alamat">Alamat Lengkap (Untuk Antar-Jemput Cucian)</label>
+                        <textarea id="alamat" name="alamat" rows="2" placeholder="cth. Perum Telang Indah Blok C No 12"><?= htmlspecialchars($_POST['alamat'] ?? '') ?></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="username">Username Akun</label>
                         <input type="text" id="username" name="username" placeholder="Buat username untuk login" value="<?= htmlspecialchars($_POST['username'] ?? '') ?>" required>
                     </div>
 
                     <div class="form-group" style="margin-bottom: 1.5rem;">
                         <label for="password">Password</label>
                         <div class="input-password-wrapper">
-                            <input type="password" id="password" name="password" placeholder="Buat password baru" required>
+                            <input type="password" id="password" name="password" placeholder="Buat kata sandi minimal 6 karakter" required>
                             <button type="button" class="btn-toggle-pwd" id="btnTogglePwd">
                                 <span id="eyeIcon">👁️</span>
                             </button>
@@ -145,15 +160,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <button type="submit" class="btn-primary">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
-                        Daftar Akun Baru
+                        Daftar Sebagai Pelanggan
                     </button>
                 </form>
             <?php endif; ?>
 
             <div class="auth-footer">
-                Sudah memiliki akun? <a href="login.php">Masuk di sini</a>
+                Sudah punya akun pelanggan? <a href="login.php">Masuk di sini</a>
+                <div style="margin-top: 0.75rem;">
+                    <a href="index.php" style="color: var(--text-muted); font-size: 0.8rem; font-weight: 500;">
+                        &larr; Kembali ke Beranda Utama
+                    </a>
+                </div>
             </div>
         </div>
     </div>
@@ -164,7 +184,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const pwdInput = document.getElementById('password');
     const eyeIcon = document.getElementById('eyeIcon');
 
-    if (btnToggle) {
+    if (btnToggle && pwdInput) {
         btnToggle.addEventListener('click', function() {
             if (pwdInput.type === 'password') {
                 pwdInput.type = 'text';

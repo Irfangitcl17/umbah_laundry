@@ -1,95 +1,247 @@
 <?php
 session_start();
 
-// Proteksi akses: jika pengguna belum login, arahkan ke login.php
-if (!isset($_SESSION['user'])) {
-    header("Location: login.php");
+// Jika sudah login, langsung arahkan ke dashboard yang sesuai
+if (isset($_SESSION['user'])) {
+    if ($_SESSION['user']['role'] === 'pelanggan') {
+        header("Location: dashboard_pelanggan.php");
+    } else {
+        header("Location: kasir.php");
+    }
     exit;
 }
 
 require_once __DIR__ . '/config/Database.php';
-require_once __DIR__ . '/classes/Pelanggan.php';
 require_once __DIR__ . '/classes/Layanan.php';
 require_once __DIR__ . '/classes/Transaksi.php';
 
 $db = (new Database())->getConnection();
 $layananModel   = new Layanan($db);
-$pelangganModel = new Pelanggan($db);
 $transaksiModel = new Transaksi($db);
 
-$successMsg = '';
-$errorMsg   = '';
-
-// 1. Aksi Tambah Transaksi Baru
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buat_transaksi'])) {
-    $nama        = trim($_POST['nama'] ?? '');
-    $no_hp       = trim($_POST['no_hp'] ?? '');
-    $id_layanan  = (int)($_POST['id_layanan'] ?? 0);
-    $berat       = (float)($_POST['berat_jumlah'] ?? 0);
-    $metode      = $_POST['metode'] ?? 'Tunai';
-    $statusBayar = $_POST['status_pembayaran'] ?? 'Lunas';
-
-    if (!empty($nama) && !empty($no_hp) && $id_layanan > 0 && $berat > 0) {
-        $pelangganId = $pelangganModel->findOrCreate($nama, $no_hp, $_POST['alamat'] ?? '');
-        
-        $kode = $transaksiModel->buatTransaksi(
-            $pelangganId,
-            $id_layanan,
-            (int)$_SESSION['user']['id'],
-            $berat,
-            $metode,
-            $statusBayar
-        );
-        
-        $successMsg = "Transaksi Berhasil Dibuat! No. Nota: {$kode}";
-    } else {
-        $errorMsg = "Harap lengkapi semua kolom transaksi dengan benar.";
-    }
-}
-
-// 2. Aksi Update Status Cucian
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status_cucian'])) {
-    $trxId     = (int)$_POST['transaksi_id'];
-    $newStatus = $_POST['new_status'];
-    if ($transaksiModel->updateStatus($trxId, $newStatus)) {
-        $successMsg = "Status cucian berhasil diperbarui menjadi '{$newStatus}'!";
-    } else {
-        $errorMsg = "Gagal memperbarui status cucian.";
-    }
-}
-
-// 3. Aksi Update Status Pembayaran (cth: Belum Lunas -> Lunas)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['update_status_bayar'])) {
-    $trxId     = (int)$_POST['transaksi_id'];
-    $newBayar  = $_POST['new_status_bayar'];
-    if ($transaksiModel->updateStatusPembayaran($trxId, $newBayar)) {
-        $successMsg = "Status pembayaran berhasil diubah menjadi '{$newBayar}'!";
-    } else {
-        $errorMsg = "Gagal mengubah status pembayaran.";
-    }
-}
-
 $services = $layananModel->getAll();
-$omset    = $transaksiModel->getOmsetHariIni();
 
-$statusFilter = $_GET['status'] ?? '';
-$searchQuery  = trim($_GET['q'] ?? '');
-
-$daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQuery);
+// Fitur Lacak Cucian Publik
+$lacakKeyword = trim($_GET['lacak'] ?? '');
+$hasilLacak = [];
+if (!empty($lacakKeyword)) {
+    $hasilLacak = $transaksiModel->lacakTransaksi($lacakKeyword);
+}
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Umbah Laundry - Kasir & POS Operasional</title>
+    <title>Umbah Laundry - Solusi Cucian Bersih, Wangi & Cepat di Telang Madura</title>
+    <meta name="description" content="Layanan laundry kiloan dan satuan higienis di Telang, Kamal, Madura. 1 Mesin 1 Pelanggan, wangi tahan lama, proses cepat.">
     <link rel="stylesheet" href="assets/css/chingu-style.css">
+    <style>
+        /* Landing Page Specific Styling */
+        .landing-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            position: sticky;
+            top: 0;
+            background: var(--surface-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            z-index: 50;
+        }
+        .landing-hero {
+            background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+            color: #ffffff;
+            border-radius: var(--radius-xl);
+            padding: 2.25rem 1.35rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.3);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.3rem 0.75rem;
+            border-radius: var(--radius-full);
+            margin-bottom: 1rem;
+            backdrop-filter: blur(4px);
+        }
+        .hero-title {
+            font-size: 1.65rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.5px;
+        }
+        .hero-desc {
+            font-size: 0.88rem;
+            opacity: 0.92;
+            line-height: 1.5;
+            margin-bottom: 1.5rem;
+            max-width: 420px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .hero-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+        @media (min-width: 480px) {
+            .hero-actions {
+                flex-direction: row;
+            }
+        }
+        .btn-hero-primary {
+            background: #ffffff;
+            color: var(--primary);
+            font-weight: 800;
+            padding: 0.8rem 1.25rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+            transition: all 0.2s;
+        }
+        .btn-hero-primary:hover {
+            background: #f8fafc;
+            transform: translateY(-1px);
+        }
+        .btn-hero-secondary {
+            background: rgba(255, 255, 255, 0.18);
+            color: #ffffff;
+            font-weight: 700;
+            padding: 0.8rem 1.25rem;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+        }
+        .section-box {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 1.35rem 1.15rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .section-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 0.35rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .section-sub {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+        .feature-card {
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 0.9rem;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 1.6rem;
+            margin-bottom: 0.35rem;
+        }
+        .feature-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            margin-bottom: 0.2rem;
+        }
+        .feature-desc {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
+        .landing-footer {
+            text-align: center;
+            padding: 1.75rem 1rem;
+            border-top: 1px solid var(--border);
+            margin-top: 1.5rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .order-step-timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px dashed var(--border);
+            font-size: 0.72rem;
+        }
+        .step-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 0.2rem;
+            flex: 1;
+            color: var(--text-muted);
+        }
+        .step-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            border: 2px solid #cbd5e1;
+        }
+        .step-item.active-step {
+            color: var(--primary);
+            font-weight: 700;
+        }
+        .step-item.active-step .step-dot {
+            background: var(--primary);
+            border-color: var(--primary-light);
+            box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.2);
+        }
+        .step-item.passed-step {
+            color: #059669;
+        }
+        .step-item.passed-step .step-dot {
+            background: #059669;
+            border-color: #a7f3d0;
+        }
+    </style>
 </head>
 <body>
 
-<div class="app-container">
-    <!-- Header Elegan dengan Brand Umbah Laundry & Profil Kasir -->
-    <header class="top-header">
+<div class="app-container" style="padding-bottom: 0;">
+    <!-- Header Publik Umbah Laundry -->
+    <header class="landing-header">
         <div class="brand-wrapper">
             <div class="brand-logo-icon">🧺</div>
             <div>
@@ -97,379 +249,274 @@ $daftarTransaksi = $transaksiModel->getDaftarTransaksi($statusFilter, $searchQue
                 <div class="brand-loc">Telang, Kamal, Madura</div>
             </div>
         </div>
-        <div class="user-badge">
-            <div class="user-badge-avatar"><?= strtoupper(substr($_SESSION['user']['nama'], 0, 1)) ?></div>
-            <div class="user-badge-name"><?= htmlspecialchars($_SESSION['user']['nama']) ?></div>
+        <div style="display: flex; gap: 0.4rem;">
+            <a href="login.php" class="btn-sm btn-outline" style="min-height: 36px; padding: 0.35rem 0.75rem; font-size: 0.82rem;">
+                Masuk
+            </a>
+            <a href="register.php" class="btn-sm btn-primary" style="min-height: 36px; padding: 0.35rem 0.75rem; font-size: 0.82rem;">
+                Daftar
+            </a>
         </div>
     </header>
 
     <div class="content">
-        <!-- Card Omset Hari Ini -->
-        <div class="stat-card">
-            <h4>Omset Hari Ini</h4>
-            <div class="amount">Rp <?= number_format($omset, 0, ',', '.') ?></div>
-            <div style="font-size: 0.78rem; opacity: 0.9; margin-top: 0.35rem;">
-                Kasir: <strong><?= htmlspecialchars($_SESSION['user']['nama']) ?></strong> (<?= ucfirst(htmlspecialchars($_SESSION['user']['role'])) ?>)
-            </div>
-        </div>
-
-        <?php if ($successMsg): ?>
-            <div class="alert alert-success">✅ <?= htmlspecialchars($successMsg) ?></div>
-        <?php endif; ?>
-
-        <?php if ($errorMsg): ?>
-            <div class="alert alert-danger">⚠️ <?= htmlspecialchars($errorMsg) ?></div>
-        <?php endif; ?>
-
-        <!-- Form Timbang & Transaksi Cepat (Accordion) -->
-        <details class="collapse-card" <?= (isset($_POST['buat_transaksi']) && $errorMsg) ? 'open' : '' ?>>
-            <summary class="collapse-summary">
-                <span><span class="badge-icon">+</span> Input Transaksi Baru</span>
-                <span>▼</span>
-            </summary>
-            <div class="collapse-body">
-                <form method="POST" action="index.php">
-                    <input type="hidden" name="buat_transaksi" value="1">
-                    
-                    <div class="form-group">
-                        <label>Nomor WhatsApp Pelanggan</label>
-                        <input type="tel" name="no_hp" required placeholder="08xxxxxxxxxx (untuk kirim nota WA)" value="<?= htmlspecialchars($_POST['no_hp'] ?? '') ?>">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Nama Pelanggan</label>
-                        <input type="text" name="nama" required placeholder="Nama lengkap pelanggan" value="<?= htmlspecialchars($_POST['nama'] ?? '') ?>">
-                    </div>
-
-                    <div class="form-group">
-                        <label>Pilih Layanan</label>
-                        <select name="id_layanan" id="selectLayanan" required>
-                            <option value="">-- Pilih Layanan Cucian --</option>
-                            <?php foreach ($services as $srv): ?>
-                                <option value="<?= $srv['id'] ?>" data-harga="<?= $srv['harga_per_satuan'] ?>" data-satuan="<?= htmlspecialchars($srv['satuan']) ?>">
-                                    <?= htmlspecialchars($srv['nama_layanan']) ?> (Rp <?= number_format($srv['harga_per_satuan'], 0, ',', '.') ?>/<?= htmlspecialchars($srv['satuan']) ?>)
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                        <div class="form-group">
-                            <label>Berat / Jumlah</label>
-                            <input type="number" step="0.1" name="berat_jumlah" id="inputBerat" required placeholder="cth. 3.5" min="0.1" value="<?= htmlspecialchars($_POST['berat_jumlah'] ?? '') ?>">
-                        </div>
-                        <div class="form-group">
-                            <label>Estimasi Total</label>
-                            <input type="text" id="estimasiTotal" value="Rp 0" readonly style="background: #f8fafc; font-weight: 700; color: var(--primary);">
-                        </div>
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
-                        <div class="form-group">
-                            <label>Metode Bayar</label>
-                            <select name="metode">
-                                <option value="Tunai">Tunai</option>
-                                <option value="QRIS">QRIS</option>
-                                <option value="Transfer">Transfer Bank</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Status Bayar</label>
-                            <select name="status_pembayaran">
-                                <option value="Lunas">Lunas</option>
-                                <option value="Belum Lunas">Belum Lunas</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn-primary">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        Simpan Transaksi Cucian
-                    </button>
-                </form>
-            </div>
-        </details>
-
-        <!-- Pencarian Instan -->
-        <form method="GET" action="index.php" class="search-wrapper">
-            <?php if (!empty($statusFilter)): ?>
-                <input type="hidden" name="status" value="<?= htmlspecialchars($statusFilter) ?>">
-            <?php endif; ?>
-            <span class="search-icon">🔍</span>
-            <input type="text" name="q" placeholder="Cari nama, no HP, atau no nota..." value="<?= htmlspecialchars($searchQuery) ?>" onchange="this.form.submit()">
-        </form>
-
-        <!-- Status Filter Tabs -->
-        <div class="tabs">
-            <a href="index.php<?= !empty($searchQuery) ? '?q='.urlencode($searchQuery) : '' ?>" class="tab-btn <?= empty($statusFilter) ? 'active' : '' ?>">Semua</a>
-            <a href="index.php?status=Antrian<?= !empty($searchQuery) ? '&q='.urlencode($searchQuery) : '' ?>" class="tab-btn <?= $statusFilter === 'Antrian' ? 'active' : '' ?>">Antrian</a>
-            <a href="index.php?status=Dalam Proses<?= !empty($searchQuery) ? '&q='.urlencode($searchQuery) : '' ?>" class="tab-btn <?= $statusFilter === 'Dalam Proses' ? 'active' : '' ?>">Proses</a>
-            <a href="index.php?status=Selesai<?= !empty($searchQuery) ? '&q='.urlencode($searchQuery) : '' ?>" class="tab-btn <?= $statusFilter === 'Selesai' ? 'active' : '' ?>">Selesai</a>
-            <a href="index.php?status=Sudah Diambil<?= !empty($searchQuery) ? '&q='.urlencode($searchQuery) : '' ?>" class="tab-btn <?= $statusFilter === 'Sudah Diambil' ? 'active' : '' ?>">Sudah Diambil</a>
-        </div>
-
-        <!-- Daftar Transaksi -->
-        <div class="order-list">
-            <?php if (empty($daftarTransaksi)): ?>
-                <div style="text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 2.5rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 12px;">
-                    🧺 Tidak ada antrian cucian yang ditemukan.
-                </div>
-            <?php else: ?>
-                <?php foreach ($daftarTransaksi as $trx): ?>
-                    <?php
-                        $badgeClass = match($trx['status_cucian']) {
-                            'Antrian'       => 'badge-antrian',
-                            'Dalam Proses'  => 'badge-proses',
-                            'Selesai'       => 'badge-selesai',
-                            'Sudah Diambil' => 'badge-diambil',
-                            'Batal'         => 'badge-batal',
-                            default         => 'badge-proses'
-                        };
-                        
-                        // Bersihkan no HP untuk format WhatsApp (62...)
-                        $hpRaw = preg_replace('/[^0-9]/', '', $trx['no_hp']);
-                        if (str_starts_with($hpRaw, '0')) {
-                            $hpWa = '62' . substr($hpRaw, 1);
-                        } else {
-                            $hpWa = $hpRaw;
-                        }
-
-                        // Buat teks pesan WhatsApp rapi
-                        $waText = "Halo kak *{$trx['nama_pelanggan']}*,\n"
-                                . "Update cucian Anda di *Umbah Laundry*:\n"
-                                . "📌 No Nota: *{$trx['kode_transaksi']}*\n"
-                                . "🧺 Layanan: {$trx['nama_layanan']} ({$trx['berat_jumlah']} {$trx['satuan']})\n"
-                                . "💵 Total: Rp " . number_format($trx['total_harga'], 0, ',', '.') . " (" . $trx['status_pembayaran'] . ")\n"
-                                . "🏷️ Status Cucian: *{$trx['status_cucian']}*\n\n"
-                                . "Terima kasih telah mempercayakan cucian Anda di Umbah Laundry! 🙏";
-                        $waUrl = "https://api.whatsapp.com/send?phone={$hpWa}&text=" . urlencode($waText);
-                    ?>
-                    <div class="order-card">
-                        <div class="order-card-header">
-                            <div>
-                                <span class="order-code"><?= htmlspecialchars($trx['kode_transaksi']) ?></span>
-                                <h5><?= htmlspecialchars($trx['nama_pelanggan']) ?></h5>
-                                <div class="order-card-meta">
-                                    📱 <a href="<?= $waUrl ?>" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;"><?= htmlspecialchars($trx['no_hp']) ?></a>
-                                    <br>
-                                    🧺 <?= htmlspecialchars($trx['nama_layanan']) ?> • <?= $trx['berat_jumlah'] ?> <?= htmlspecialchars($trx['satuan']) ?>
-                                    <br>
-                                    🕒 <?= date('d/m/Y H:i', strtotime($trx['tanggal_masuk'])) ?>
-                                </div>
-                            </div>
-                            <div style="text-align: right;">
-                                <div class="order-price">Rp <?= number_format($trx['total_harga'], 0, ',', '.') ?></div>
-                                <div style="margin-top: 0.35rem;" class="order-card-badges">
-                                    <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($trx['status_cucian']) ?></span>
-                                    <?php if ($trx['status_pembayaran'] === 'Lunas'): ?>
-                                        <span class="badge badge-lunas">Lunas</span>
-                                    <?php else: ?>
-                                        <span class="badge badge-belum-lunas">Belum Lunas</span>
-                                    <?php endif; ?>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Baris Aksi Kasir: Ubah Status & Cetak Nota -->
-                        <div class="order-card-actions">
-                            <!-- Ubah Status Cucian -->
-                            <form method="POST" action="index.php" class="status-select-form">
-                                <input type="hidden" name="update_status_cucian" value="1">
-                                <input type="hidden" name="transaksi_id" value="<?= $trx['id'] ?>">
-                                <select name="new_status" onchange="this.form.submit()" title="Ubah status cucian">
-                                    <option value="Antrian" <?= $trx['status_cucian'] === 'Antrian' ? 'selected' : '' ?>>Antrian</option>
-                                    <option value="Dalam Proses" <?= $trx['status_cucian'] === 'Dalam Proses' ? 'selected' : '' ?>>Proses</option>
-                                    <option value="Selesai" <?= $trx['status_cucian'] === 'Selesai' ? 'selected' : '' ?>>Selesai</option>
-                                    <option value="Sudah Diambil" <?= $trx['status_cucian'] === 'Sudah Diambil' ? 'selected' : '' ?>>Diambil</option>
-                                </select>
-                            </form>
-
-                            <div style="display: flex; gap: 0.35rem;">
-                                <?php if ($trx['status_pembayaran'] === 'Belum Lunas'): ?>
-                                    <form method="POST" action="index.php" style="display: inline;">
-                                        <input type="hidden" name="update_status_bayar" value="1">
-                                        <input type="hidden" name="transaksi_id" value="<?= $trx['id'] ?>">
-                                        <input type="hidden" name="new_status_bayar" value="Lunas">
-                                        <button type="submit" class="btn-sm btn-sm-nota" title="Tandai Pembayaran Lunas" onclick="return confirm('Tandai transaksi ini sudah Lunas?')">
-                                            💰 Lunaskan
-                                        </button>
-                                    </form>
-                                <?php endif; ?>
-
-                                <!-- Tombol Kirim WhatsApp Cepat -->
-                                <a href="<?= $waUrl ?>" target="_blank" class="btn-sm btn-sm-whatsapp" title="Kirim notifikasi via WhatsApp">
-                                    💬 WA
-                                </a>
-
-                                <!-- Tombol Lihat Nota / Struk -->
-                                <button type="button" class="btn-sm btn-sm-nota" onclick="showReceipt(<?= htmlspecialchars(json_encode($trx)) ?>)">
-                                    🧾 Nota
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Bottom Navigation Bar dengan SVG Icons -->
-    <nav class="bottom-nav">
-        <a href="index.php" class="nav-item active">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-            </svg>
-            Home
-        </a>
-        <a href="services.php" class="nav-item">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-            </svg>
-            Layanan
-        </a>
-        <a href="laporan.php" class="nav-item">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-            </svg>
-            Laporan
-        </a>
-        <a href="logout.php" class="nav-item" onclick="return confirm('Apakah Anda yakin ingin keluar dari sistem?')">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-            </svg>
-            Keluar
-        </a>
-    </nav>
-</div>
-
-<!-- Modal Struk & Nota Digital -->
-<div class="modal-overlay" id="receiptModal">
-    <div class="modal-card">
-        <div class="modal-header">
-            <h5 class="modal-title">Struk Nota Digital</h5>
-            <button type="button" class="modal-close" onclick="closeReceipt()">✕</button>
-        </div>
-        <div class="modal-body">
-            <div id="printReceiptArea">
-                <div class="receipt-paper">
-                    <div class="receipt-header">
-                        <div class="receipt-title">UMBAH LAUNDRY</div>
-                        <div>Jl. Raya Telang, Kamal, Madura</div>
-                        <div>WhatsApp: 0812-3456-7890</div>
-                    </div>
-                    
-                    <div class="receipt-row">
-                        <span>No. Nota:</span>
-                        <strong id="rcptCode">-</strong>
-                    </div>
-                    <div class="receipt-row">
-                        <span>Tanggal:</span>
-                        <span id="rcptDate">-</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span>Pelanggan:</span>
-                        <span id="rcptCustomer">-</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span>Kasir:</span>
-                        <span id="rcptCashier">-</span>
-                    </div>
-
-                    <div class="receipt-divider"></div>
-
-                    <div class="receipt-row">
-                        <span id="rcptService">-</span>
-                        <span id="rcptQty">-</span>
-                    </div>
-
-                    <div class="receipt-divider"></div>
-
-                    <div class="receipt-row receipt-total">
-                        <span>TOTAL:</span>
-                        <span id="rcptTotal">-</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span>Pembayaran:</span>
-                        <span id="rcptPayment">-</span>
-                    </div>
-                    <div class="receipt-row">
-                        <span>Status Cucian:</span>
-                        <strong id="rcptStatus">-</strong>
-                    </div>
-
-                    <div class="receipt-footer">
-                        <div>Terima kasih atas kunjungan Anda!</div>
-                        <div>Simpan struk ini untuk pengambilan cucian.</div>
-                    </div>
-                </div>
-            </div>
-
-            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;" class="no-print">
-                <button type="button" class="btn-primary" onclick="window.print()" style="min-height: 42px; font-size: 0.85rem;">
-                    🖨️ Cetak Struk
-                </button>
-                <a id="rcptWaBtn" href="#" target="_blank" class="btn-outline btn-sm-whatsapp" style="text-decoration: none; min-height: 42px; font-size: 0.85rem; border: none;">
-                    💬 Kirim WA
+        <!-- Hero Banner Landing Page -->
+        <div class="landing-hero">
+            <div class="hero-badge">✨ Laundry Terpercaya di Telang Madura</div>
+            <h1 class="hero-title">Cucian Bersih, Wangi & Rapi Tanpa Repot</h1>
+            <p class="hero-desc">
+                Solusi cerdas kebutuhan laundry harian Anda. 1 mesin 1 pelanggan, deterjen berkualitas, wangi tahan lama, dengan kemudahan lacak status secara real-time.
+            </p>
+            <div class="hero-actions">
+                <a href="register.php" class="btn-hero-primary">
+                    🧺 Pesan Laundry Sekarang
+                </a>
+                <a href="#lacakSection" class="btn-hero-secondary">
+                    🔍 Lacak Status Cucian
                 </a>
             </div>
         </div>
+
+        <!-- Section 1: Lacak Status Cucian Cepat (Tanpa Perlu Login) -->
+        <div class="section-box" id="lacakSection">
+            <div class="section-title">
+                <span>🔍</span> Lacak Status Cucian Anda
+            </div>
+            <div class="section-sub">
+                Masukkan <strong>Nomor Nota (cth: UMB-...)</strong> atau <strong>Nomor WhatsApp</strong> untuk melihat progres cucian Anda secara langsung:
+            </div>
+
+            <form method="GET" action="index.php#lacakSection" class="search-wrapper" style="margin-bottom: 0.75rem;">
+                <span class="search-icon">🔎</span>
+                <input type="text" name="lacak" placeholder="Ketik No. Nota atau No. WhatsApp Anda..." value="<?= htmlspecialchars($lacakKeyword) ?>" required>
+            </form>
+            <button type="submit" formAction="index.php#lacakSection" class="btn-primary" style="min-height: 42px; font-size: 0.88rem;">
+                Cek Status Cucian Sekarang
+            </button>
+
+            <!-- Hasil Pencarian Tracking -->
+            <?php if (!empty($lacakKeyword)): ?>
+                <div style="margin-top: 1.25rem;">
+                    <?php if (empty($hasilLacak)): ?>
+                        <div class="alert alert-danger" style="margin-bottom: 0;">
+                            ⚠️ Tidak ditemukan cucian dengan nomor nota atau no WhatsApp "<strong><?= htmlspecialchars($lacakKeyword) ?></strong>". Mohon pastikan nomor yang dimasukkan sudah benar.
+                        </div>
+                    <?php else: ?>
+                        <div style="font-weight: 700; font-size: 0.85rem; color: var(--primary); margin-bottom: 0.65rem;">
+                            Ditemukan <?= count($hasilLacak) ?> data cucian untuk "<?= htmlspecialchars($lacakKeyword) ?>":
+                        </div>
+                        <div class="order-list">
+                            <?php foreach ($hasilLacak as $trx): ?>
+                                <?php
+                                    $badgeClass = match($trx['status_cucian']) {
+                                        'Antrian'       => 'badge-antrian',
+                                        'Dalam Proses'  => 'badge-proses',
+                                        'Selesai'       => 'badge-selesai',
+                                        'Sudah Diambil' => 'badge-diambil',
+                                        default         => 'badge-proses'
+                                    };
+                                    $s = $trx['status_cucian'];
+                                    $isProses  = in_array($s, ['Dalam Proses', 'Selesai', 'Sudah Diambil']);
+                                    $isSelesai = in_array($s, ['Selesai', 'Sudah Diambil']);
+                                    $isDiambil = ($s === 'Sudah Diambil');
+                                ?>
+                                <div class="order-card">
+                                    <div class="order-card-header">
+                                        <div>
+                                            <span class="order-code"><?= htmlspecialchars($trx['kode_transaksi']) ?></span>
+                                            <h5><?= htmlspecialchars($trx['nama_layanan']) ?></h5>
+                                            <div class="order-card-meta">
+                                                Pelanggan: <strong><?= htmlspecialchars($trx['nama_pelanggan']) ?></strong>
+                                                <br>
+                                                Berat/Jumlah: <?= $trx['berat_jumlah'] ?> <?= htmlspecialchars($trx['satuan']) ?>
+                                                <br>
+                                                Masuk: <?= date('d M Y H:i', strtotime($trx['tanggal_masuk'])) ?>
+                                            </div>
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div class="order-price">Rp <?= number_format($trx['total_harga'], 0, ',', '.') ?></div>
+                                            <div style="margin-top: 0.35rem;" class="order-card-badges">
+                                                <span class="badge <?= $badgeClass ?>"><?= htmlspecialchars($trx['status_cucian']) ?></span>
+                                                <span class="badge <?= $trx['status_pembayaran'] === 'Lunas' ? 'badge-lunas' : 'badge-belum-lunas' ?>">
+                                                    <?= htmlspecialchars($trx['status_pembayaran']) ?>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Timeline Step -->
+                                    <div class="order-step-timeline">
+                                        <div class="step-item <?= $s === 'Antrian' ? 'active-step' : ($isProses ? 'passed-step' : '') ?>">
+                                            <div class="step-dot"></div>
+                                            <span>1. Antrian</span>
+                                        </div>
+                                        <div class="step-item <?= $s === 'Dalam Proses' ? 'active-step' : ($isSelesai ? 'passed-step' : '') ?>">
+                                            <div class="step-dot"></div>
+                                            <span>2. Dicuci</span>
+                                        </div>
+                                        <div class="step-item <?= $s === 'Selesai' ? 'active-step' : ($isDiambil ? 'passed-step' : '') ?>">
+                                            <div class="step-dot"></div>
+                                            <span>3. Selesai</span>
+                                        </div>
+                                        <div class="step-item <?= $isDiambil ? 'active-step passed-step' : '' ?>">
+                                            <div class="step-dot"></div>
+                                            <span>4. Diambil</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Section 2: Simulasi Biaya Cucian (Kalkulator Interaktif) -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>🧮</span> Kalkulator Estimasi Biaya
+            </div>
+            <div class="section-sub">
+                Hitung perkiraan biaya laundry Anda sebelum memesan:
+            </div>
+
+            <div class="form-group">
+                <label>Pilih Layanan</label>
+                <select id="calcLayanan" onchange="hitungSimulasi()">
+                    <?php foreach ($services as $srv): ?>
+                        <option value="<?= $srv['harga_per_satuan'] ?>" data-satuan="<?= htmlspecialchars($srv['satuan']) ?>">
+                            <?= htmlspecialchars($srv['nama_layanan']) ?> (Rp <?= number_format($srv['harga_per_satuan'], 0, ',', '.') ?>/<?= htmlspecialchars($srv['satuan']) ?>)
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                <div class="form-group">
+                    <label>Perkiraan Berat (<span id="calcSatuanLabel">kg</span>)</label>
+                    <input type="number" step="0.5" id="calcBerat" value="3" min="0.5" oninput="hitungSimulasi()">
+                </div>
+                <div class="form-group">
+                    <label>Perkiraan Total</label>
+                    <input type="text" id="calcTotal" value="Rp 0" readonly style="background: var(--bg-page); font-weight: 800; color: var(--primary);">
+                </div>
+            </div>
+
+            <a href="register.php" class="btn-primary" style="margin-top: 0.5rem; text-decoration: none;">
+                🧺 Pesan Layanan Ini Sekarang
+            </a>
+        </div>
+
+        <!-- Section 3: Daftar Layanan & Tarif -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>📋</span> Daftar Layanan & Tarif
+            </div>
+            <div class="section-sub">
+                Harga terjangkau, transparan, dan hasil cucian terjamin higienis:
+            </div>
+
+            <div class="order-list">
+                <?php foreach ($services as $srv): ?>
+                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 0; border-bottom: 1px dashed var(--border);">
+                        <div>
+                            <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-main);"><?= htmlspecialchars($srv['nama_layanan']) ?></div>
+                            <div style="font-size: 0.75rem; color: var(--text-muted);">Kategori: <?= htmlspecialchars($srv['kategori']) ?></div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight: 800; color: var(--primary); font-size: 0.95rem;">
+                                Rp <?= number_format($srv['harga_per_satuan'], 0, ',', '.') ?>
+                            </div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">/ <?= htmlspecialchars($srv['satuan']) ?></div>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <!-- Section 4: Mengapa Memilih Umbah Laundry? -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>⭐</span> Keunggulan Umbah Laundry
+            </div>
+            <div class="section-sub">
+                Komitmen kami memberikan standar kebersihan terbaik untuk pakaian Anda:
+            </div>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🧼</div>
+                    <div class="feature-name">1 Mesin 1 Pelanggan</div>
+                    <div class="feature-desc">Cucian Anda tidak pernah dicampur dengan pakaian orang lain. Higienis & aman.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🌸</div>
+                    <div class="feature-name">Wangi Tahan Lama</div>
+                    <div class="feature-desc">Menggunakan deterjen dan pewangi premium khusus laundry berkualitas tinggi.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <div class="feature-name">Tepat Waktu</div>
+                    <div class="feature-desc">Jadwal selesai yang disiplin dan konsisten untuk kenyamanan aktivitas Anda.</div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <div class="feature-name">Tracking Online</div>
+                    <div class="feature-desc">Bisa pantau progres cucian langsung dari smartphone kapan saja.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 5: Lokasi & Hubungi Kami -->
+        <div class="section-box">
+            <div class="section-title">
+                <span>📍</span> Lokasi & Jam Buka Outlet
+            </div>
+            <div class="section-sub">
+                Kunjungi outlet kami atau hubungi kami untuk layanan antar-jemput:
+            </div>
+
+            <div style="font-size: 0.85rem; color: var(--text-main); line-height: 1.6; margin-bottom: 1rem;">
+                🏢 <strong>Alamat:</strong> Jl. Raya Telang No. 12, Kamal, Bangkalan, Madura<br>
+                ⏰ <strong>Jam Operasional:</strong> Buka Setiap Hari (07.00 - 21.00 WIB)<br>
+                📞 <strong>WhatsApp:</strong> 0877-1589-0651
+            </div>
+
+            <a href="https://api.whatsapp.com/send?phone=6287715890651&text=Halo%20Umbah%20Laundry,%20saya%20mau%20tanya%20layanan%20laundry" target="_blank" class="btn-primary" style="background: #25d366; border: none; text-decoration: none;">
+                💬 Hubungi Kami via WhatsApp
+            </a>
+        </div>
+
+        <!-- Footer -->
+        <footer class="landing-footer">
+            <div style="font-weight: 700; color: var(--text-main); margin-bottom: 0.35rem;">
+                🧺 UMBAH LAUNDRY
+            </div>
+            <div>Solusi Cucian Bersih, Wangi & Rapi • Telang, Madura</div>
+            <div style="margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border);">
+                <a href="login.php" style="color: var(--text-muted); text-decoration: underline; font-size: 0.75rem;">
+                    🔒 Portal Staf / Login Kasir
+                </a>
+            </div>
+        </footer>
     </div>
 </div>
 
 <script>
-    // Kalkulasi Otomatis Estimasi Total
-    const selectLayanan = document.getElementById('selectLayanan');
-    const inputBerat = document.getElementById('inputBerat');
-    const estimasiTotal = document.getElementById('estimasiTotal');
+    function hitungSimulasi() {
+        const select = document.getElementById('calcLayanan');
+        const opt = select.options[select.selectedIndex];
+        const harga = parseFloat(opt.value) || 0;
+        const satuan = opt.getAttribute('data-satuan') || 'kg';
+        document.getElementById('calcSatuanLabel').textContent = satuan;
 
-    function hitungEstimasi() {
-        const opt = selectLayanan.options[selectLayanan.selectedIndex];
-        const harga = parseFloat(opt ? opt.getAttribute('data-harga') : 0) || 0;
-        const berat = parseFloat(inputBerat.value) || 0;
+        const berat = parseFloat(document.getElementById('calcBerat').value) || 0;
         const total = Math.round(harga * berat);
-        estimasiTotal.value = 'Rp ' + total.toLocaleString('id-ID');
+        document.getElementById('calcTotal').value = 'Rp ' + total.toLocaleString('id-ID');
     }
 
-    if (selectLayanan && inputBerat) {
-        selectLayanan.addEventListener('change', hitungEstimasi);
-        inputBerat.addEventListener('input', hitungEstimasi);
-    }
-
-    // Modal Struk Generator
-    const receiptModal = document.getElementById('receiptModal');
-
-    function showReceipt(trx) {
-        document.getElementById('rcptCode').textContent = trx.kode_transaksi;
-        document.getElementById('rcptDate').textContent = trx.tanggal_masuk;
-        document.getElementById('rcptCustomer').textContent = trx.nama_pelanggan + ' (' + trx.no_hp + ')';
-        document.getElementById('rcptCashier').textContent = trx.nama_karyawan || 'Kasir';
-        document.getElementById('rcptService').textContent = trx.nama_layanan;
-        document.getElementById('rcptQty').textContent = trx.berat_jumlah + ' ' + trx.satuan;
-        document.getElementById('rcptTotal').textContent = 'Rp ' + Number(trx.total_harga).toLocaleString('id-ID');
-        document.getElementById('rcptPayment').textContent = trx.metode_pembayaran + ' (' + trx.status_pembayaran + ')';
-        document.getElementById('rcptStatus').textContent = trx.status_cucian;
-
-        // WhatsApp Direct Link
-        let hpClean = trx.no_hp.replace(/\D/g, '');
-        if (hpClean.startsWith('0')) hpClean = '62' + hpClean.substring(1);
-        const text = `Halo kak *${trx.nama_pelanggan}*,\nBerikut struk dari *Umbah Laundry*:\nNo Nota: *${trx.kode_transaksi}*\nLayanan: ${trx.nama_layanan} (${trx.berat_jumlah} ${trx.satuan})\nTotal: Rp ${Number(trx.total_harga).toLocaleString('id-ID')} (${trx.status_pembayaran})\nStatus: *${trx.status_cucian}*\nTerima kasih!`;
-        document.getElementById('rcptWaBtn').href = `https://api.whatsapp.com/send?phone=${hpClean}&text=${encodeURIComponent(text)}`;
-
-        receiptModal.classList.add('active');
-    }
-
-    function closeReceipt() {
-        receiptModal.classList.remove('active');
-    }
-
-    // Tutup modal jika klik di luar modal card
-    receiptModal.addEventListener('click', function(e) {
-        if (e.target === receiptModal) {
-            closeReceipt();
-        }
-    });
+    // Jalankan kalkulator pertama kali
+    hitungSimulasi();
 </script>
 
 </body>
